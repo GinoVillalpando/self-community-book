@@ -1,4 +1,10 @@
 <?php
+namespace Deepdivedylan\DataDesign;
+
+require_once("autoload.php");
+require_once(dirname(__DIR__) . "/vendor/autoload.php");
+
+use Ramsey\Uuid\Uuid;
 
 
 /**
@@ -25,16 +31,61 @@ class user {
 	 */
 	private $userEmail;
 	/**
-	 * hash for user's password
-	 * @var string $userHash
+	 * full name for user
+	 * @var string $userFullName
 	 */
-	private $userHandle;
+	private $userFullName;
 	/**
 	 * Username Handle for this user; this is a unique identifier
 	 * @var string $userHandle
 	 */
+	private $userHandle;
+	/**
+	 * hash for user's password
+	 * @var string $userHash
+	 */
 	private $userHash;
 
+	/**
+	 * constructor for this user
+	 *
+	 * @param string | Uuid $newUserId of this user or null if a new user
+	 * @param string  $newUserActivationToken string containing Activation Token
+	 * @param string  $newUserEmail of this user's email
+	 * @param string  $newUserFullName of this user or null if a new user
+	 * @param string  $newUserHandle Username for this user
+	 * @param string  $newUserHash hashed password for this user
+	 * @throws \InvalidArgumentException if data types are not valid
+	 * @throws \RangeException if data values are out of bounds (e.g., strings are too long, negative int)
+	 * @throws \TypeError if  data types violate type hints
+	 * @throws \Exception if some other exception occurs
+	 * @documentation https://php.net/manual/en/language.oop5.decon.php
+ 	 */
+	public function __construct($newUserId, string $newUserActivationToken, string $newUserEmail, string $newUserFullName, string $newUserHandle, string $newUserHash) {
+		try {
+			$this->setUserId($newUserId);
+			$this->setUserActivationToken($newUserActivationToken);
+			$this->setUserEmail($newUserEmail);
+			$this->setUserFullName($newUserFullName);
+			$this->setUserHandle($newUserHandle);
+			$this->setUserHash($newUserHash);
+		}
+		//determine what exception type was thrown
+		catch(\InvalidArgumentException | \RangeException | \Exception | \TypeError $exception) {
+			$exceptionType = get_class($exception);
+			throw(new $exceptionType($exception->getMessage(), 0, $exception));
+		}
+	}
+
+	/**
+	 * accessor method for user id
+	 *
+	 * @return Uuid value of user id
+	 *
+	 **/
+	public function getUserId(): Uuid {
+		return $this->userId;
+	}
 	/**
 	 * mutator method for user Id
 	 *
@@ -56,12 +107,6 @@ class user {
 	 * accessor method for userActivationToken
 	 * @return string value of the activation token
 	 */
-	/**
-	 * @param string $userActivationToken
-	 */
-	/**
-	 * @return string
-	 */
 	public function getUserActivationToken(): string {
 		return $this->userActivationToken;
 	}
@@ -72,9 +117,6 @@ class user {
 	 * @throws \InvalidArgumentException if the token is not a string or insecure
 	 * @throws \RangeException if the token is not exactly 32 characters
 	 * @throws \TypeError if the activation token is not a string
-	 */
-	/**
-	 * @param string $userActivationToken
 	 */
 	public function setUserActivationToken(?string $newUserActivationToken): void {
 		if($newUserActivationToken === null) {
@@ -107,9 +149,6 @@ class user {
 	 * @throws \RangeException if $newUserEmail is > 128 characters
 	 * @throws \TypeError if $newUserEmail is not a string
 	 */
-	/**
-	 * @param string $userEmail
-	 */
 	public function setUserEmail(string $newUserEmail): void {
 		// verify the email is secure
 			$newUserEmail = trim($newUserEmail);
@@ -125,12 +164,42 @@ class user {
 					$this->userEmail = $newUserEmail;
 	}
 	/**
+	 * accessor method for Full Name
+	 *
+	 * @return string for user name
+	 */
+	public function getUserFullName(): string {
+		return $this->userFullName;
+	}
+	/*
+	 * mutator method for Full Name
+	 *
+	 * @throws \InvalidArgumentException if $newUserFullName is not a valid name or insecure
+	 * @throws \RangeException if $newUserEmail is > 97 characters
+	 * @throws \TypeError if $newUserFullName is not a string
+	 */
+	/**
+	 * @param string $userFullName
+	 */
+	public function setUserFullName(string $newUserFullName): void {
+	//verify the Handle is secure
+	$newUserFullName = trim($newUserFullName);
+	$newUserFullName = filter_var($newUserFullName, FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES);
+	if(empty($newUserFullName) === true) {
+	throw(new \InvalidArgumentException("User Handle is empty or insecure"));
+	}
+	//verify the Handle will fit in the database
+	if(strlen($newUserFullName) > 255) {
+		throw(new \RangeException("User Handle is too large"));
+	}
+	//store the Handle
+	$this->userFullName = $newUserFullName;
+	}
+
+	/**
 	 * accessor method for userHash
 	 *
 	 * @return string for userHash hashed password
-	 */
-	/**
-	 * @return string
 	 */
 	public function getUserHash(): string {
 		return $this->userHash;
@@ -142,9 +211,6 @@ class user {
 	 * @throws \InvalidArgumentException if the hash is not secure
 	 * @throws \RangeException if the hash is not 128 characters
 	 * @throws \TypeError if author hash is not a string
-	 */
-	/**
-	 * @param string $userHash
 	 */
 	public function setUserHash(string $newUserHash): void {
 		//enforce that the hash is properly formatted
@@ -191,7 +257,7 @@ class user {
 		}
 		//verify the Handle will fit in the database
 		if(strlen($newUserHandle) > 32) {
-			throw(new \RangeException("User Handle is too large")):
+			throw(new \RangeException("User Handle is too large"));
 		}
 		//store the Handle
 		$this->userHandle = $newUserHandle;
@@ -322,7 +388,7 @@ class user {
 		while(($row = $statement->fetch()) !== false) {
 			try {
 				$user = new user($row["userId"], $row["userActivationToken"], $row["userEmail"], $row["userHandle"], $row["userHash"]);
-				$users[$tweets->key()] = $user;
+				$users[$users->key()] = $user;
 				$users->next();;
 			} catch(\Exception $exception) {
 				// if the row couldn't be converted, rethrow it
