@@ -13,8 +13,8 @@ use Ramsey\Uuid\Uuid;
  * This is a cross section of what is probably stored about a user. this entity is a top level entity that
  * holds the keys to the other entities
  */
-class user {
-
+class User implements \JsonSerializable {git
+	use ValidateUuid;
 	/**
 	 * id for this user; this is the primary key
 	 * @var Uuid $userId
@@ -177,9 +177,7 @@ class user {
 	 * @throws \InvalidArgumentException if $newUserFullName is not a valid name or insecure
 	 * @throws \RangeException if $newUserEmail is > 97 characters
 	 * @throws \TypeError if $newUserFullName is not a string
-	 */
-	/**
-	 * @param string $userFullName
+	 * @param string $newUserFullName
 	 */
 	public function setUserFullName(string $newUserFullName): void {
 	//verify the Handle is secure
@@ -425,5 +423,16 @@ class user {
 			}
 		}
 		return ($users);
+	}
+	/**
+	 * formats the state variables for JSON serialization
+	 *
+	 * @return array resulting state variables to serialize
+	 */
+	public function jsonserialize(): array {
+		$fields = get_object_vars($this);
+
+		$fields["userId"] = $this->userId->toString();
+		$fields["userActivationToken"] = $this->userActivationToken->toString();
 	}
 }
